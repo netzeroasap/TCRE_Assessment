@@ -39,10 +39,10 @@ This repository provides a Bayesian analysis framework to support the assessment
 
 ## Usage
 
-Example scripts and Jupyter notebooks are available in the `examples/` directory.
+Example scripts and Jupyter notebooks will be available in the `examples/` directory TK TK
 
 ```
-python scripts/run_bayesian_analysis.py --input data/input_file.csv --output results/
+Bayesian estimates of the components $\beta$ 
 ```
 
 ## Contributing
