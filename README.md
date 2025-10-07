@@ -42,7 +42,8 @@ This repository provides a Bayesian analysis framework to support the assessment
 Example scripts and Jupyter notebooks will be available in the `examples/` directory TK TK
 
 ```
-Bayesian estimates of the components $\beta$ 
+Bayesian estimates of the components of TCRE is located in the Components.pynb file.  Full assessment of TCRE will be in ASSESS_TCRE (incomplete)
+
 ```
 
 ## Contributing
