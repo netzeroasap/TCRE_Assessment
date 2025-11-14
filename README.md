@@ -14,12 +14,13 @@ This repository provides a Bayesian analysis framework to support the assessment
 - Visualization utilities for assessment and reporting
 
 ## Quick start
-
+```
 git clone https://github.com/netzeroasap/TCRE_Assessment.git
 cd TCRE_Assessment
 conda env create -f pymc_environment.yml
 conda activate current
 jupyter lab notebooks/analysis.ipynb
+```
 ### Prerequisites
 
 - Python 3.8+
