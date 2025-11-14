@@ -13,33 +13,23 @@ This repository provides a Bayesian analysis framework to support the assessment
 - Reproducible analysis workflows
 - Visualization utilities for assessment and reporting
 
-## Getting Started
+## Quick start
 
+git clone https://github.com/netzeroasap/TCRE_Assessment.git
+cd TCRE_Assessment
+conda env create -f pymc_environment.yml
+conda activate current
+jupyter lab notebooks/analysis.ipynb
 ### Prerequisites
 
 - Python 3.8+
 - Recommended: [conda](https://docs.conda.io/) or [venv](https://docs.python.org/3/library/venv.html) for environment management
 
-### Installation
-
-1. Clone the repository:
-    ```sh
-    git clone https://github.com/netzeroasap/TCRE_ASSESSMENT.git
-    cd TCRE_ASSESSMENT
-    ```
-2. (Optional) Create and activate a virtual environment:
-    ```sh
-    python -m venv venv
-    source venv/bin/activate  # On Windows use `venv\Scripts\activate`
-    ```
-3. Install dependencies:
-    ```sh
-    pip install -r requirements.txt
-    ```
 
 ## Usage
 
-Example scripts and Jupyter notebooks are available in the `examples/` directory.
+Example scripts and Jupyter notebooks will be available in the `examples/` directory.
+For right now use analysis.ipynb
 
 ```
 python scripts/run_bayesian_analysis.py --input data/input_file.csv --output results/
