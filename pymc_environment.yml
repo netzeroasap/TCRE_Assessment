@@ -1,4 +1,4 @@
-name: current
+name: tcre
 channels:
   - conda-forge
   - defaults
