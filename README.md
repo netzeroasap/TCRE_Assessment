@@ -19,7 +19,6 @@ git clone https://github.com/netzeroasap/TCRE_Assessment.git
 cd TCRE_Assessment
 conda env create -f pymc_environment.yml
 conda activate tcre
-jupyter lab notebooks/analysis.ipynb
 ```
 ### Prerequisites
 
@@ -33,7 +32,7 @@ Example scripts and Jupyter notebooks will be available in the `examples/` direc
 For right now use analysis.ipynb
 
 ```
-python scripts/run_bayesian_analysis.py --input data/input_file.csv --output results/
+jupyter lab notebooks/analysis.ipynb
 ```
 
 ## Contributing
