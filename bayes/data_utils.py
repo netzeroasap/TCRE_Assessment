@@ -8,6 +8,14 @@ from pathlib import Path
 from typing import Dict, Any
 from . import DATA_DIR 
 
+def get_coords():
+    TCREsource_betagamma = pd.read_csv(DATA_DIR/'TCREsource_betagamma.csv')
+    cmip6_models=TCREsource_betagamma.model[TCREsource_betagamma['source'].isin(['CMIP6', 'CMIP6+'])].values
+    coords={"process":["nitrogen","fire","vegetation"],\
+    "model":cmip6_models,\
+    "parameter":["βL","γL"],\
+    "cross_parameter":["βL","γL"]}
+    return coords
 
 def load_CMIP_land_data(kind="2xCO2"):
     """
@@ -23,7 +31,7 @@ def load_CMIP_land_data(kind="2xCO2"):
     dict
         Evidence dictionary with processed data
     """
-    TCREsource_betagamma = pd.read_csv('DATA/TCREsource_betagamma.csv')
+    TCREsource_betagamma = pd.read_csv(DATA_DIR/'TCREsource_betagamma.csv')
     beta = TCREsource_betagamma[f'beta_L_{kind}'].values
     gamma = TCREsource_betagamma[f'gamma_L_{kind}'].values
 
@@ -35,7 +43,7 @@ def load_CMIP_land_data(kind="2xCO2"):
 
 
 def load_emergent_constraint_evidence():
-    with pdfplumber.open("DATA/Zechlau2022.pdf") as pdf:
+    with pdfplumber.open(DATA_DIR / "Zechlau2022.pdf") as pdf:
         page = pdf.pages[6]
         zechtable = page.extract_table()
 
@@ -84,7 +92,7 @@ def load_emergent_constraint_evidence():
 def load_process_evidence(kind="2xCO2"):
     # process grouping
    
-    TCREsource_betagamma = pd.read_csv('TCREsource_betagamma.csv')
+    TCREsource_betagamma = pd.read_csv(DATA_DIR/ 'TCREsource_betagamma.csv')
     beta = TCREsource_betagamma[f'beta_L_{kind}'].values
     gamma = TCREsource_betagamma[f'gamma_L_{kind}'].values
 
