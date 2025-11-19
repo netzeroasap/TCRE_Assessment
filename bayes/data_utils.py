@@ -1,41 +1,57 @@
 # data_utils.py
+"""
+This module contains functions to load and preprocess the data used in the Bayesian analysis.
+
+We load and preprocess scientific data for climate modelling.
+
+#18-11-2025
+
+We currently have the following data:
+- CMIP6 (Coupled Model Intercomparison Project Phase 6) land data: This is a collection of climate model simulations. (beta_L_2xCO2, gamma_L_2xCO2, beta_L_4xCO2, gamma_L_4xCO2)
+- Zechlau2022 emergent constraint data
+- TCREsource_betagamma data, It reads pre-calculated beta and gamma values related to TCRE
+
+"""
+
 
 import numpy as np
 import pandas as pd
 import pdfplumber
 import xarray as xr
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, List
 from . import DATA_DIR 
 
 
-def load_CMIP_land_data(kind="2xCO2"):
+def load_CMIP_land_data(kind="2xCO2", selected_source = ['CMIP6', 'CMIP6+']):
     """
     Load and preprocess CMIP6 data from Norman.
+
+    Currently returns beta and gamma values for CMIP6 models.
     
     Parameters
     ----------
     kind : str
-        One of 2xCO2 or 4xCO2: specifies when to calculate beta and gamma
+        One of 2xCO2 or 4xCO2: specifies when to calculate beta and gamma, depending on double or quadruple CO2 concentration.
         
     Returns
     -------
     dict
-        Evidence dictionary with processed data
+        Evidence dictionary with processed data: beta and gamma values for CMIP6 models.
     """
-    TCREsource_betagamma = pd.read_csv('DATA/TCREsource_betagamma.csv')
+    TCREsource_betagamma = pd.read_csv(DATA_DIR / 'TCREsource_betagamma.csv')
     beta = TCREsource_betagamma[f'beta_L_{kind}'].values
     gamma = TCREsource_betagamma[f'gamma_L_{kind}'].values
 
-    beta_cmip6 = beta[TCREsource_betagamma['source'].isin(['CMIP6', 'CMIP6+'])]
-    gamma_cmip6 = gamma[TCREsource_betagamma['source'].isin(['CMIP6', 'CMIP6+'])]
+    beta_cmip6 = beta[TCREsource_betagamma['source'].isin(selected_source)] #it looks there is also a Process ensembles
+    gamma_cmip6 = gamma[TCREsource_betagamma['source'].isin(selected_source)] #it looks there is also a Process ensembles
 
     return {"βL_cmip":beta_cmip6,
                 "γL_cmip":gamma_cmip6}
 
 
 def load_emergent_constraint_evidence():
-    with pdfplumber.open("DATA/Zechlau2022.pdf") as pdf:
+    with pdfplumber.open(DATA_DIR / "Zechlau2022.pdf") as pdf:
         page = pdf.pages[6]
         zechtable = page.extract_table()
 
@@ -81,17 +97,17 @@ def load_emergent_constraint_evidence():
     evidence=evidence_EC
     return evidence
 
-def load_process_evidence(kind="2xCO2"):
+def load_process_evidence(kind="2xCO2", selected_source = ['CMIP6', 'CMIP6+']):
     # process grouping
    
-    TCREsource_betagamma = pd.read_csv('TCREsource_betagamma.csv')
+    TCREsource_betagamma = pd.read_csv(DATA_DIR / 'TCREsource_betagamma.csv')
     beta = TCREsource_betagamma[f'beta_L_{kind}'].values
     gamma = TCREsource_betagamma[f'gamma_L_{kind}'].values
 
-    beta_cmip = beta[TCREsource_betagamma['source'].isin(['CMIP6', 'CMIP6+'])]
-    gamma_cmip = gamma[TCREsource_betagamma['source'].isin(['CMIP6', 'CMIP6+'])]
+    beta_cmip = beta[TCREsource_betagamma['source'].isin(selected_source)]
+    gamma_cmip = gamma[TCREsource_betagamma['source'].isin(selected_source)]
 
-    cmip6_models=TCREsource_betagamma.model[TCREsource_betagamma['source'].isin(['CMIP6', 'CMIP6+'])].values
+    cmip6_models=TCREsource_betagamma.model[TCREsource_betagamma['source'].isin(selected_source)].values
 
     cmip6_hasNitro = np.array([True, False, False, True, False, False, False, True, True, True, True, True, True])
     cmip6_hasPF = np.array([False, False, False, True, False, False, False, False, False, True, False, False, True])
@@ -143,7 +159,7 @@ def load_process_evidence(kind="2xCO2"):
 
     nu_proc["ν_fire"] = [float(x) for x in nu_fire_ukesm]
 
-    #Dynamic vegettion
+    #Dynamic vegetation
    
     nu_dynveg_ukesm= gamma[TCREsource_betagamma['model'].isin(['UKESM1-1_ctrl'])]/\
     gamma[TCREsource_betagamma['model'].isin(['UKESM1-1_nodgvm'])]
