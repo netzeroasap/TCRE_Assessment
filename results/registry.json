@@ -1,0 +1,22 @@
+{
+    "baseline_example": {
+        "hash": "a53cc268",
+        "timestamp": "2025-11-26T15:42:48.047297",
+        "scenario": "default"
+    },
+    "Nitrogen_Test_01": {
+        "hash": "5d050c82",
+        "timestamp": "2025-11-26T15:42:48.162095",
+        "scenario": "default"
+    },
+    "conservative_nitrogen": {
+        "hash": "2fdd03a1",
+        "timestamp": "2025-11-26T16:40:06.437492",
+        "scenario": "default"
+    },
+    "high_uncertainty_fire": {
+        "hash": "66007bef",
+        "timestamp": "2025-11-26T16:40:08.384929",
+        "scenario": "default"
+    }
+}

@@ -21,7 +21,54 @@ import xarray as xr
 from pathlib import Path
 from typing import Dict, Any, List
 from . import DATA_DIR 
+# In bayes/data_utils.py
 
+import hashlib
+import json
+from typing import Any
+
+def generate_config_id(config_object: Any) -> str:
+    """
+    Generates a unique short hash (SHA-256 truncated) for a specific 
+    prior configuration state.
+    
+    Parameters
+    ----------
+    config_object : PriorConfiguration
+        The configuration instance to hash.
+        
+    Returns
+    -------
+    str
+        An 8-character hexadecimal string (e.g., 'a1b2c3d4').
+    """
+    if not hasattr(config_object, 'get_state_dict'):
+        raise AttributeError("Config object must have 'get_state_dict' method")
+        
+    state = config_object.get_state_dict()
+    
+    # Dump to JSON with sorted keys to ensure determinism
+    # default=str handles any non-serializable types safely
+    serialized = json.dumps(state, sort_keys=True, default=str)
+    
+    # Generate hash
+    full_hash = hashlib.sha256(serialized.encode('utf-8')).hexdigest()
+    
+    return full_hash[:8] # Return first 8 chars for readability
+
+
+
+
+
+
+def get_coords():
+    TCREsource_betagamma = pd.read_csv(DATA_DIR/'TCREsource_betagamma.csv')
+    cmip6_models=TCREsource_betagamma.model[TCREsource_betagamma['source'].isin(['CMIP6', 'CMIP6+'])].values
+    coords={"process":["nitrogen","fire","vegetation"],\
+    "model":cmip6_models,\
+    "parameter":["βL","γL"],\
+    "cross_parameter":["βL","γL"]}
+    return coords
 
 def load_CMIP_land_data(kind="2xCO2", selected_source = ['CMIP6', 'CMIP6+']):
     """
