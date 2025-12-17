@@ -11,7 +11,7 @@ This repository provides a Bayesian analysis framework to support the assessment
 - Bayesian inference to estimate TCRE parameters
 - Tools for processing climate model outputs and observational datasets
 - Reproducible analysis workflows
-- Visualization utilities for assessment and reporting
+- Multiple lines of evidence: processes and historical observations
 
 ## Quick start
 ```
@@ -28,8 +28,9 @@ conda activate tcre
 
 ## Usage
 
-Example scripts and Jupyter notebooks will be available in the `examples/` directory.
-For right now use analysis.ipynb
+Example scripts and Jupyter notebooks are available in the `notebooks/` directory.
+- TCRE_from_DAMIP: uses CMIP6 simulations from the Detection and Attribution Model Intercomparison Project (DAMIP) to calculate the historical warming attributable to CO2.  TCRE is calculated from CO2 emissions.
+- TCRE_from_process: uses process-based simulations, CMIP earth system models, and observed emergent constraints to calculate process-informed posteriors for the CO2 fertilization effect and the climate effect (CURRENTLY LAND ONLY).
 
 ```
 jupyter lab notebooks/analysis.ipynb
