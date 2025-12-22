@@ -17,7 +17,7 @@ This repository provides a Bayesian analysis framework to support the assessment
 ```
 git clone https://github.com/netzeroasap/TCRE_Assessment.git
 cd TCRE_Assessment
-conda env create -f pymc_environment.yml
+conda env create -f tcre_environment.yml
 conda activate tcre
 ```
 ### Prerequisites
