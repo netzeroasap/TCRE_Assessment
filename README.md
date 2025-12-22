@@ -29,13 +29,16 @@ conda activate tcre
 ## Usage
 
 Example scripts and Jupyter notebooks are available in the `notebooks/` directory.
-- TCRE_from_DAMIP: uses CMIP6 simulations from the Detection and Attribution Model Intercomparison Project (DAMIP) to calculate the historical warming attributable to CO2.  TCRE is calculated from CO2 emissions.
-- TCRE_from_process: uses process-based simulations, CMIP earth system models, and observed emergent constraints to calculate process-informed posteriors for the CO2 fertilization effect and the climate effect (CURRENTLY LAND ONLY).
+- To  CMIP6 simulations from the Detection and Attribution Model Intercomparison Project (DAMIP) to calculate the historical warming attributable to CO2.  TCRE is calculated from CO2 emissions.
+
 
 ```
-jupyter lab notebooks/analysis.ipynb
+jupyter notebook notebooks/TCRE_from_DAMIP.ipynb
 ```
-
+- To use  process-based simulations, CMIP earth system models, and observed emergent constraints to calculate process-informed posteriors for the CO2 fertilization effect and the climate effect (CURRENTLY LAND ONLY).
+```
+jupyter notebook notebooks/TCRE_from_process.ipynb
+```
 ## Contributing
 
 Contributions are welcome! Please open issues or submit pull requests for bug fixes or enhancements.
@@ -46,4 +49,4 @@ Contributions are welcome! Please open issues or submit pull requests for bug fi
 
 ## Acknowledgements
 
-Go here
+This work was supported by ....
