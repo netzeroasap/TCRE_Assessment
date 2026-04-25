@@ -6,7 +6,7 @@ import pdfplumber
 import xarray as xr
 from pathlib import Path
 from typing import Dict, Any
-from . import DATA_DIR 
+from . import DATA_DIR, PROJECT_ROOT 
 
 def get_coords():
     TCREsource_betagamma = pd.read_csv(DATA_DIR/'TCREsource_betagamma.csv')
@@ -17,29 +17,85 @@ def get_coords():
     "cross_parameter":["βL","γL"]}
     return coords
 
-def load_CMIP_land_data(kind="2xCO2"):
+
+def load_carbon_parameters(kind="2xCO2"):
     """
-    Load and preprocess CMIP6 data from Norman.
-    
-    Parameters
-    ----------
-    kind : str
-        One of 2xCO2 or 4xCO2: specifies when to calculate beta and gamma
-        
+    Load land and ocean beta/gamma parameters into a single dataset.
+
     Returns
     -------
-    dict
-        Evidence dictionary with processed data
+    xr.Dataset
+        dims: model
+        variables:
+            beta_land
+            gamma_land
+            beta_ocean
+            gamma_ocean
     """
-    TCREsource_betagamma = pd.read_csv(DATA_DIR/'TCREsource_betagamma.csv')
-    beta = TCREsource_betagamma[f'beta_L_{kind}'].values
-    gamma = TCREsource_betagamma[f'gamma_L_{kind}'].values
 
-    beta_cmip6 = beta[TCREsource_betagamma['source'].isin(['CMIP6', 'CMIP6+'])]
-    gamma_cmip6 = gamma[TCREsource_betagamma['source'].isin(['CMIP6', 'CMIP6+'])]
+    # ---------- LAND ----------
+    df = pd.read_csv(DATA_DIR / "TCREsource_betagamma.csv")
 
-    return {"βL_cmip":beta_cmip6,
-                "γL_cmip":gamma_cmip6}
+    mask = df["source"].isin(["CMIP6", "CMIP6+"])
+
+    land = xr.Dataset(
+        {
+            "beta_land": ("model", df.loc[mask, f"beta_L_{kind}"].values),
+            "gamma_land": ("model", df.loc[mask, f"gamma_L_{kind}"].values),
+        },
+        coords={"model": df.loc[mask, "model"].values},
+    )
+
+    # ---------- OCEAN ----------
+    terhaar = pd.read_csv(DATA_DIR / "Terhaar.txt", header=None, sep=" ")
+    ocean_models = terhaar[0].values
+
+    ds = xr.load_dataset(DATA_DIR / "beta_gamma_terhaar.nc", decode_times=False)
+
+    beta = ds.beta.isel(time=69 if kind == "2xCO2" else -1)
+    gamma = ds.gamma.isel(time=69 if kind == "2xCO2" else -1)
+
+    ocean = xr.Dataset(
+        {
+            "beta_ocean": ("model", beta.values),
+            "gamma_ocean": ("model", gamma.values),
+        },
+        coords={"model": ocean_models},
+    )
+
+    # ---------- ALIGN MODELS ----------
+    common = np.intersect1d(land.model.values, ocean.model.values)
+
+    land = land.sel(model=common)
+    ocean = ocean.sel(model=common)
+
+    ds_all = xr.merge([land, ocean])
+
+    return ds_all
+
+# def load_CMIP_land_data(kind="2xCO2"):
+#     """
+#     Load and preprocess CMIP6 data from Norman.
+    
+#     Parameters
+#     ----------
+#     kind : str
+#         One of 2xCO2 or 4xCO2: specifies when to calculate beta and gamma
+        
+#     Returns
+#     -------
+#     dict
+#         Evidence dictionary with processed data
+#     """
+#     TCREsource_betagamma = pd.read_csv(DATA_DIR/'TCREsource_betagamma.csv')
+#     beta = TCREsource_betagamma[f'beta_L_{kind}'].values
+#     gamma = TCREsource_betagamma[f'gamma_L_{kind}'].values
+
+#     beta_cmip6 = beta[TCREsource_betagamma['source'].isin(['CMIP6', 'CMIP6+'])]
+#     gamma_cmip6 = gamma[TCREsource_betagamma['source'].isin(['CMIP6', 'CMIP6+'])]
+
+#     return {"βL_cmip":beta_cmip6,
+#                 "γL_cmip":gamma_cmip6}
 
 
 def load_emergent_constraint_evidence():
@@ -104,18 +160,19 @@ def load_process_evidence(kind="2xCO2"):
     cmip6_hasNitro = np.array([True, False, False, True, False, False, False, True, True, True, True, True, True])
     cmip6_hasPF = np.array([False, False, False, True, False, False, False, False, False, True, False, False, True])
     cmip6_hasFire = np.array([False, False, False, True, True, True, False, False, True, True, False, True, True])
-    cmip6_hasDynveg = np.array([False, False, False, False, False, True, False, False, True, False, True, True, False])
-
-    lookup_table=np.stack([cmip6_hasNitro,cmip6_hasPF,cmip6_hasFire,cmip6_hasDynveg]).astype(np.float32)
+    cmip6_hasDynveg = np.array([False, False, False, False, False, True, False, False, True, False, True, True, False])           
+    lookup_table=\
+    np.stack([cmip6_hasNitro,cmip6_hasPF,cmip6_hasFire,cmip6_hasDynveg]).astype(np.float32)
+                                          
 
     eta_proc={}
     eta_nlim_access= beta[TCREsource_betagamma['model'].isin(['ACCESS-ESM_CN'])]/\
     beta[TCREsource_betagamma['model'].isin(['ACCESS-ESM_C'])] #0.69 
 
     eta_nlim_ukesm= beta[TCREsource_betagamma['model'].isin(['UKESM1-1_ctrl'])]/\
-    beta[TCREsource_betagamma['model'].isin(['UKESM1-1_nonlim'])] #0.77
+    beta[TCREsource_betagamma['model'].isin(['UKESM1-1_nonlim'])]#0.77
 
-    eta_proc["η_nitrogen"] = [float(eta_nlim_access),float(eta_nlim_ukesm)]
+    eta_proc["η_nitrogen"] = [float(eta_nlim_access[0]),float(eta_nlim_ukesm[0])]
 
 
 
@@ -135,26 +192,26 @@ def load_process_evidence(kind="2xCO2"):
     ###### nu #####
    
     nu_proc={}
-    nu_nlim_access= gamma[TCREsource_betagamma['model'].isin(['ACCESS-ESM_CN'])]/\
-    gamma[TCREsource_betagamma['model'].isin(['ACCESS-ESM_C'])] #0.69 
+    nu_nlim_access= (gamma[TCREsource_betagamma['model'].isin(['ACCESS-ESM_CN'])]-\
+    gamma[TCREsource_betagamma['model'].isin(['ACCESS-ESM_C'])]) #0.69 
 
-    nu_nlim_ukesm= gamma[TCREsource_betagamma['model'].isin(['UKESM1-1_ctrl'])]/\
-    gamma[TCREsource_betagamma['model'].isin(['UKESM1-1_nonlim'])] #0.77
+    nu_nlim_ukesm= (gamma[TCREsource_betagamma['model'].isin(['UKESM1-1_ctrl'])]-\
+    gamma[TCREsource_betagamma['model'].isin(['UKESM1-1_nonlim'])]) #0.77
 
-    nu_proc["ν_nitrogen"] = [float(nu_nlim_access),float(nu_nlim_ukesm)]
+    nu_proc["ν_nitrogen"] = [float(nu_nlim_access[0]),float(nu_nlim_ukesm[0])]
 
 
 
     #FIRE
-    nu_fire_ukesm= gamma[TCREsource_betagamma['model'].isin(['UKESM1-1_fire'])]/\
-    gamma[TCREsource_betagamma['model'].isin(['UKESM1-1_ctrl'])]
+    nu_fire_ukesm= (gamma[TCREsource_betagamma['model'].isin(['UKESM1-1_fire'])]-\
+    gamma[TCREsource_betagamma['model'].isin(['UKESM1-1_ctrl'])])
 
     nu_proc["ν_fire"] = [float(x) for x in nu_fire_ukesm]
 
     #Dynamic vegettion
    
-    nu_dynveg_ukesm= gamma[TCREsource_betagamma['model'].isin(['UKESM1-1_ctrl'])]/\
-    gamma[TCREsource_betagamma['model'].isin(['UKESM1-1_nodgvm'])]
+    nu_dynveg_ukesm= (gamma[TCREsource_betagamma['model'].isin(['UKESM1-1_ctrl'])]-\
+    gamma[TCREsource_betagamma['model'].isin(['UKESM1-1_nodgvm'])])
 
     nu_proc["ν_vegetation"] = [float(x) for x in nu_dynveg_ukesm]
     
@@ -194,4 +251,111 @@ def validate_priors(priors: Dict,hyperpriors:Dict) -> None:
         #return missing_priors
         raise ValueError(f"Missing required priors: {str(missing_priors)} \
          Missing required hyperpriors: {str(missing_hyperpriors)}")
-                             
+
+def load_ocean_ec_obs():
+    """
+    Load observations of AMOC, SSS, CUC from Terhaar et al
+    """
+    D={}
+    D["AMOC"]= (17.02,0.35)
+
+    D["SSS"]=(34.04,0.04)
+    D["CUC"]=(0.546,0.003)
+    return D
+def load_ocean_ec_predictors():
+    """
+    Load ocean emergent-constraint predictors from Terhaar data.
+
+    Returns
+    -------
+    xr.Dataset
+        dims: model
+        variables:
+            AMOC
+            SSS
+            CUC
+    """
+
+    terhaar = pd.read_csv(DATA_DIR / "Terhaar.txt", header=None, sep=" ")
+
+    ds = xr.Dataset(
+        {
+            "AMOC": ("model", terhaar[1].values),
+            "SSS": ("model", terhaar[2].values),
+            "CUC": ("model", terhaar[3].values),
+        },
+        coords={"model": terhaar[0].values},
+    )
+
+    return ds
+
+def standardize_ocean_ec(ec_ds, observations):
+    """
+    Standardize ocean EC predictors and observations.
+
+    Parameters
+    ----------
+    ec_ds : xr.Dataset
+        Dataset with variables AMOC, SSS, CUC for models
+
+    observations : dict
+        Example:
+        {
+            "AMOC": (mean, sd),
+            "SSS": (mean, sd),
+            "CUC": (mean, sd)
+        }
+
+    Returns
+    -------
+    dict containing:
+        O_m
+        O_obs
+        O_obs_unc
+        mean
+        std
+    """
+
+    vars = ["AMOC", "SSS", "CUC"]
+
+    means = ec_ds[vars].to_array().mean("model")
+    stds  = ec_ds[vars].to_array().std("model")
+
+    ec_s = (ec_ds[vars] - means) / stds
+    ec_array = ec_s.to_array(dim="observable")  # rename variable dimension
+    O_m = ec_array.values.T
+
+    #O_m = ec_s.to_array().values.T
+
+    O_obs = np.array([
+        (observations[v][0] - means.sel(variable=v).item()) /
+        stds.sel(variable=v).item()
+        for v in vars
+    ])
+
+    O_obs_unc = np.array([
+        observations[v][1] / stds.sel(variable=v).item()
+        for v in vars
+    ])
+
+    return dict(
+        O_m=O_m,
+        O_obs=O_obs,
+        O_obs_unc=O_obs_unc,
+        mean=means,
+        std=stds,
+    )
+def unstandardize(values_s, mean, std):
+    """
+    Convert standardized values back to physical units.
+
+    Parameters
+    ----------
+    values_s : array
+        standardized values
+
+    mean : array-like
+    std : array-like
+    """
+
+    return values_s * std + mean
