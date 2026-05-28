@@ -23,13 +23,13 @@ conda activate tcre
 ### Prerequisites
 
 - Python 3.8+
-- Recommended: [conda](https://docs.conda.io/) or [venv](https://docs.python.org/3/library/venv.html) for environment management
+- Recommended: [conda](https://docs.conda.io/) 
 
 
 ## Usage
 
 Example scripts and Jupyter notebooks are available in the `notebooks/` directory.
-- To  CMIP6 simulations from the Detection and Attribution Model Intercomparison Project (DAMIP) to calculate the historical warming attributable to CO2.  TCRE is calculated from CO2 emissions.
+- (NOT READY YET)  CMIP6 simulations from the Detection and Attribution Model Intercomparison Project (DAMIP) to calculate the historical warming attributable to CO2.  TCRE is calculated from CO2 emissions.
 
 
 ```
@@ -41,12 +41,9 @@ jupyter notebook notebooks/TCRE_from_process.ipynb
 ```
 ## Contributing
 
-Contributions are welcome! Please open issues or submit pull requests for bug fixes or enhancements.
+Contributions are welcome! Please open issues or submit pull requests for bug fixes
 
 ## License
 
 [MIT License](LICENSE)
 
-## Acknowledgements
-
-This work was supported by ....
