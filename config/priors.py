@@ -116,3 +116,22 @@ beta_ocean = {
 gamma_ocean = {
     "baseline": {"dist": "Normal", "mu": 0.0, "sigma": 100.0},
 }
+
+# ── joint_ocean (beta_O and gamma_O constrained together) ────────────────
+# Emergent constraint that links log(beta_O) and standardised gamma_O to the
+# same three ocean observables (AMOC, SSS, CUC) simultaneously, capturing
+# posterior correlation between the two feedbacks.
+joint_ocean = {
+    # Prior on theta = log(beta_O)
+    "theta": {"mu": 0.0, "sigma": 0.5},
+
+    # Prior on gamma_s_true = (gamma_O - mean(CMIP)) / std(CMIP)
+    "gamma_s_true": {"mu": 0.0, "sigma": 1.0},
+
+    # Prior on regression intercepts (a) and slope matrix (b, 3×2) — one row
+    # per observable, one column per predictor (theta, gamma_s)
+    "regression": {"mu": 0.0, "sigma": 10.0},
+
+    # LKJCholeskyCov hyperpriors for the cross-observable covariance matrix
+    "lkj": {"eta": 2.0, "sd_sigma": 5.0},
+}

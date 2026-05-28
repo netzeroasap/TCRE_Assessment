@@ -175,6 +175,68 @@ def build_beta_ocean_model(cmip_beta_ocean, O_m, O_obs, O_obs_unc, priors):
     return model
 
 
+def build_joint_ocean_model(cmip_beta_ocean, cmip_gamma_ocean, O_m, O_obs, O_obs_unc, priors):
+    """
+    Joint emergent-constraint model for beta_O and gamma_O.
+
+    A multivariate linear regression links both log(beta_O) and standardised
+    gamma_O to three standardised ocean observables (AMOC, SSS, CUC) across
+    the CMIP6 ensemble.  The joint regression captures the posterior correlation
+    between the two feedbacks that the observables induce.
+
+    Parameters
+    ----------
+    cmip_beta_ocean  : xr.DataArray  shape (model,)  CMIP6 beta_O at 2xCO2
+    cmip_gamma_ocean : xr.DataArray  shape (model,)  CMIP6 gamma_O at 2xCO2
+    O_m              : np.ndarray    shape (M, 3)    standardised model observables
+    O_obs            : np.ndarray    shape (3,)      standardised observed values
+    O_obs_unc        : np.ndarray    shape (3,)      standardised obs uncertainties
+    priors           : dict          config.priors.joint_ocean
+    """
+    theta_m     = np.log(cmip_beta_ocean.values)
+    gamma_vals  = cmip_gamma_ocean.values
+    gamma_mean  = float(gamma_vals.mean())
+    gamma_std   = float(gamma_vals.std())
+    gamma_s     = (gamma_vals - gamma_mean) / gamma_std
+
+    X_m = np.column_stack([theta_m, gamma_s])  # (M, 2)
+
+    with pm.Model() as model:
+        a = pm.Normal("a", mu=priors["regression"]["mu"],
+                      sigma=priors["regression"]["sigma"], shape=3)
+        b = pm.Normal("b", mu=priors["regression"]["mu"],
+                      sigma=priors["regression"]["sigma"], shape=(3, 2))
+
+        chol, _, _ = pm.LKJCholeskyCov(
+            "chol_cov", n=3,
+            eta=priors["lkj"]["eta"],
+            sd_dist=pm.HalfNormal.dist(priors["lkj"]["sd_sigma"]),
+            compute_corr=True,
+        )
+
+        # Learn joint emergent relationship from models
+        pm.MvNormal("model_obs", mu=a + X_m @ b.T, chol=chol, observed=O_m)
+
+        # Priors on latent true predictors
+        theta = pm.Normal("theta",
+                          mu=priors["theta"]["mu"],
+                          sigma=priors["theta"]["sigma"])
+        gamma_s_true = pm.Normal("gamma_s_true",
+                                 mu=priors["gamma_s_true"]["mu"],
+                                 sigma=priors["gamma_s_true"]["sigma"])
+        X_true = pm.math.stack([theta, gamma_s_true])
+
+        # True latent climate observable
+        O_true = pm.MvNormal("O_true", mu=a + b @ X_true, chol=chol, shape=3)
+        pm.Normal("obs", mu=O_true, sigma=O_obs_unc, observed=O_obs)
+
+        # Transform back to physical units
+        pm.Deterministic("beta_ocean", pm.math.exp(theta))
+        pm.Deterministic("gamma_ocean", gamma_std * gamma_s_true + gamma_mean)
+
+    return model
+
+
 def build_gamma_ocean_model(cmip_gamma_ocean, priors):
     """
     Correlated random-effects model for ocean carbon-climate feedback (gamma_O).

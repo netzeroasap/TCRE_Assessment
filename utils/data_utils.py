@@ -309,32 +309,31 @@ def standardize_ocean_ec(ec_ds, observations):
     Returns
     -------
     dict containing:
-        O_m
-        O_obs
-        O_obs_unc
-        mean
-        std
+        O_m       : np.ndarray (M, 3) standardised model predictor matrix
+        O_obs     : np.ndarray (3,)   standardised observed values
+        O_obs_unc : np.ndarray (3,)   standardised observation uncertainties
+        mean      : dict {var: float} per-variable CMIP means
+        std       : dict {var: float} per-variable CMIP stds
     """
 
     vars = ["AMOC", "SSS", "CUC"]
 
-    means = ec_ds[vars].to_array().mean("model")
-    stds  = ec_ds[vars].to_array().std("model")
+    # Compute per-variable statistics directly to avoid xarray broadcast issues
+    means = {v: float(ec_ds[v].mean()) for v in vars}
+    stds  = {v: float(ec_ds[v].std())  for v in vars}
 
-    ec_s = (ec_ds[vars] - means) / stds
-    ec_array = ec_s.to_array(dim="observable")  # rename variable dimension
-    O_m = ec_array.values.T
-
-    #O_m = ec_s.to_array().values.T
+    O_m = np.column_stack([
+        (ec_ds[v].values - means[v]) / stds[v]
+        for v in vars
+    ])
 
     O_obs = np.array([
-        (observations[v][0] - means.sel(variable=v).item()) /
-        stds.sel(variable=v).item()
+        (observations[v][0] - means[v]) / stds[v]
         for v in vars
     ])
 
     O_obs_unc = np.array([
-        observations[v][1] / stds.sel(variable=v).item()
+        observations[v][1] / stds[v]
         for v in vars
     ])
 
